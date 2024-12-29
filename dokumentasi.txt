@@ -1,0 +1,41 @@
+abcde.html - Tidak jelas fungsinya hanya dari nama. Mungkin berisi halaman statis atau pengujian.
+add_to_cart.php - Digunakan untuk menambahkan barang ke keranjang belanja. Penting.
+cetak_nota.php - Digunakan untuk mencetak nota transaksi. Penting.
+checkout.php - Mengelola proses checkout. Penting.
+config.php - Berisi konfigurasi database dan pengaturan lainnya. Penting.
+dashboard.jpg - Gambar untuk tampilan dashboard. Berguna jika digunakan di UI.
+dashboard.php - Halaman untuk menampilkan dashboard. Penting.
+delete.php - Menghapus data dari database. Berguna jika ada fitur penghapusan.
+error_page.php - Menampilkan halaman error. Penting untuk penanganan kesalahan.
+form_pembelian.php - Form untuk melakukan pembelian. Penting.
+foto1.jpg - Gambar untuk tampilan. Berguna jika digunakan di UI.
+hapus_transaksi.php - Menghapus transaksi. Berguna jika ada fitur penghapusan transaksi.
+error_page.php - Menampilkan halaman error. Penting untuk penanganan kesalahan.
+index.php - Halaman utama aplikasi. Penting.
+input_karyawan.php - Form untuk input data karyawan. Penting jika ada manajemen karyawan.
+input.php - Form untuk input barang. Penting.
+keranjang.php - Menampilkan keranjang belanja. Penting.
+login_process.php - Mengelola proses login karyawan. Penting.
+main.php - Mungkin berisi halaman utama atau dashboard. Penting.
+pembelian.php - Halaman untuk melakukan pembelian. Penting.
+process_beli.php - Mengelola proses pembelian. Penting.
+process_checkout.php - Mengelola proses checkout. Penting.
+process_customer.php - Mengelola input data customer. Penting.
+process_karyawan.php - Mengelola input data karyawan. Penting.
+process.php - Umumnya digunakan untuk memproses input data. Penting jika ada fungsionalitas terkait.
+reduce.php - Mengurangi stok barang. Berguna jika ada fitur pengurangan stok.
+remove_from_cart.php - Menghapus item dari keranjang. Penting.
+riwayat_transaksi.php - Menampilkan riwayat transaksi. Penting.
+script.js - Berisi JavaScript untuk interaksi di UI. Berguna jika ada fungsionalitas interaktif.
+style.css - Berisi gaya untuk tampilan. Penting untuk desain UI.
+tambah_stok.php - Menambahkan stok barang. Berguna jika ada fitur manajemen stok.
+transaksi_sukses.php - Menampilkan halaman setelah transaksi berhasil. Penting.
+update.php - Umumnya digunakan untuk memperbarui data. Berguna jika ada fitur pembaruan.
+view.php - Menampilkan data barang atau informasi lainnya. Penting.
+
+
+File yang Mungkin Tidak Ada Fungsinya:
+abcde.html: Tanpa konteks lebih lanjut, ini tampaknya tidak memiliki fungsi.
+dashboard.jpg: Hanya berguna jika digunakan dalam UI.
+foto1.jpg: Hanya berguna jika digunakan dalam UI.
+script.js: Berguna jika ada interaksi JavaScript. Jika tidak ada interaksi, mungkin tidak diperlukan.

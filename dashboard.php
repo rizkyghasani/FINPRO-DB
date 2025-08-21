@@ -34,7 +34,6 @@ $total_produk_terjual = (int)$row_total['total_produk_terjual'];
 $stmt_total->close();
 
 // Ambil data penjualan untuk grafik
-// Ambil data penjualan untuk grafik
 $query = "SELECT DATE(tanggal_transaksi) as tanggal, SUM(total_harga) as total 
           FROM transaksi 
           WHERE tanggal_transaksi BETWEEN ? AND ? 
@@ -47,28 +46,28 @@ $result = $stmt->get_result();
 
 $data = []; // Array asosiatif untuk menyimpan total penjualan berdasarkan tanggal
 
+// Mengisi array data
 while ($row = $result->fetch_assoc()) {
-    $data[$row['tanggal']] = (float)$row['total']; // Simpan total penjualan berdasarkan tanggal
+    $data[$row['tanggal']] = (float)$row['total'];
 }
 
-// Tambahkan total penjualan pada tanggal akhir ke dalam array totals
-$total_penjualan_hari_ini = 0;
-$query_total_hari_ini = "SELECT SUM(total_harga) as total_penjualan_hari_ini 
-                         FROM transaksi 
-                         WHERE tanggal_transaksi = ?";
-$stmt_total_hari_ini = $conn->prepare($query_total_hari_ini);
-$stmt_total_hari_ini->bind_param("s", $end_date);
-$stmt_total_hari_ini->execute();
-$result_total_hari_ini = $stmt_total_hari_ini->get_result();
-$row_total_hari_ini = $result_total_hari_ini->fetch_assoc();
-$total_penjualan_hari_ini = (float)$row_total_hari_ini['total_penjualan_hari_ini'];
-
-// Tambahkan tanggal akhir dan total penjualan hari ini ke dalam array
-$data[$end_date] = $total_penjualan_hari_ini;
+$stmt->close();
 
 // Siapkan array untuk grafik
-$dates = array_keys($data); // Ambil semua tanggal
-$totals = array_values($data); // Ambil semua total penjualan
+$dates = array_keys($data);
+$totals = array_values($data);
+
+// Cek jika permintaan adalah AJAX, kembalikan data dalam format JSON
+if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+    header('Content-Type: application/json');
+    echo json_encode([
+        'dates' => $dates,
+        'totals' => $totals,
+        'total_penjualan' => $total_penjualan,
+        'total_produk_terjual' => $total_produk_terjual
+    ]);
+    exit;
+}
 
 $conn->close();
 ?>
@@ -154,7 +153,7 @@ $conn->close();
     .stats {
         display: flex;
         justify-content: space-between;
-        margin-top: 20px; /* Menambahkan jarak antara header dan stats */
+        margin-top: 20px;
         margin-bottom: 20px;
     }
 
@@ -194,7 +193,6 @@ $conn->close();
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         display: flex;
         flex-direction: column;
-        /* margin-top: 20px; */
     }
 
     .menu-button {
@@ -219,7 +217,6 @@ $conn->close();
 </style>
 </head>
 <body>
-    <!-- Sidebar -->
     <div class="sidebar">
         <h2 style="text-align: center; color: white;">Toko Wahyu Listrik</h2>
         <a href="index.php">Home</a>
@@ -233,7 +230,6 @@ $conn->close();
         <a href="input_karyawan.php">Input Karyawan</a>
     </div>
 
-    <!-- Main content -->
     <div class="main-content">
         <div class="header">
             <h1>Dashboard Toko Wahyu Listrik</h1>
@@ -246,7 +242,7 @@ $conn->close();
         <div class="stats">
             <div class="card">
                 <h3>Total Penjualan</h3>
-                <p>Rp <?php echo number_format($total_penjualan, 2); ?></p>
+                <p id="total_penjualan_text">Rp <?php echo number_format($total_penjualan, 2, ',', '.'); ?></p>
             </div>
             <div class="card">
                 <h3>Target Penjualan</h3>
@@ -255,11 +251,11 @@ $conn->close();
             </div>
             <div class="card">
                 <h3>Penjualan Tercapai</h3>
-                <p><?php echo number_format(($total_penjualan / 100000) * 100, 2) . '%'; ?></p>
+                <p id="penjualan_tercapai_text"><?php echo number_format(($total_penjualan / 100000) * 100, 2, ',', '.') . '%'; ?></p>
             </div>
             <div class="card">
                 <h3>Produk Terjual</h3>
-                <p><?php echo $total_produk_terjual; ?></p>
+                <p id="produk_terjual_text"><?php echo number_format($total_produk_terjual, 0, ',', '.'); ?></p>
             </div>
         </div>
 
@@ -268,8 +264,8 @@ $conn->close();
         </div>
 
         <div class="menu-container">
-            <input type="date" id="start_date" class="date-picker" value="<?php echo $start_date; ?>">
-            <input type="date" id="end_date" class="date-picker" value="<?php echo $end_date; ?>">
+            <input type="date" id="start_date" class="date-picker" value="<?php echo htmlspecialchars($start_date); ?>">
+            <input type="date" id="end_date" class="date-picker" value="<?php echo htmlspecialchars($end_date); ?>">
             <button id="filterButton" class="menu-button">Tampilkan Grafik</button>
         </div>
     </div>
@@ -279,68 +275,95 @@ $conn->close();
         let myChart;
 
         function updateChart(dates, totals) {
-    if (myChart) {
-        myChart.destroy();
-    }
-    myChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: dates,
-            datasets: [{
-                label: 'Total Penjualan',
-                data: totals,
-                backgroundColor: 'rgba(52, 152, 219, 0.2)', // Area di bawah garis
-                borderColor: 'rgba(52, 152, 219, 1)', // Warna garis
-                borderWidth: 2, // Ketebalan garis
-                pointBackgroundColor: 'rgba(52, 152, 219, 1)', // Warna titik
-                pointBorderColor: '#fff', // Warna border titik
-                pointBorderWidth: 2, // Ketebalan border titik
-                pointRadius: 5, // Ukuran titik
-                fill: false // Tidak mengisi area di bawah garis
-            }]
-        },
-        options: {
-            responsive: true,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    grid: {
-                        color: 'rgba(0, 0, 0, 0.1)', // Warna garis grid
-                    }
-                },
-                x: {
-                    grid: {
-                        color: 'rgba(0, 0, 0, 0.1)', // Warna garis grid
-                    }
-                }
-            },
-            plugins: {
-                legend: {
-                    display: true,
-                    position: 'top',
-                },
-                tooltip: {
-                    mode: 'index',
-                    intersect: false,
-                }
+            if (myChart) {
+                myChart.destroy();
             }
+            myChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [{
+                        label: 'Total Penjualan',
+                        data: totals,
+                        backgroundColor: 'rgba(52, 152, 219, 0.2)',
+                        borderColor: 'rgba(52, 152, 219, 1)',
+                        borderWidth: 2,
+                        pointBackgroundColor: 'rgba(52, 152, 219, 1)',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 5,
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)', // Warna grid Y
+                            },
+                            ticks: {
+                                color: '#ecf0f1', // Warna label Y
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)', // Warna grid X
+                            },
+                            ticks: {
+                                color: '#ecf0f1', // Warna label X
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                color: '#ecf0f1' // Warna teks legenda
+                            }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                        }
+                    }
+                }
+            });
         }
-    });
-}
         
         document.getElementById('filterButton').addEventListener('click', function() {
             const startDate = document.getElementById('start_date').value;
             const endDate = document.getElementById('end_date').value;
             
-            // Menggunakan fetch untuk mendapatkan data baru dan memperbarui grafik
-            fetch(`dashboard.php?start_date=${startDate}&end_date=${endDate}`)
-                .then(response => response.json())
-                .then(data => {
-                    updateChart(data.dates, data.totals);
+            fetch(`dashboard.php?start_date=${startDate}&end_date=${endDate}`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Perbarui grafik
+                updateChart(data.dates, data.totals);
 
-        
-                });
+                // Perbarui statistik
+                const totalPenjualanText = 'Rp ' + data.total_penjualan.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                const penjualanTercapaiText = ((data.total_penjualan / document.getElementById('target_penjualan_input').value) * 100).toFixed(2) + '%';
+                const produkTerjualText = data.total_produk_terjual.toLocaleString('id-ID');
+
+                document.getElementById('total_penjualan_text').textContent = totalPenjualanText;
+                document.getElementById('penjualan_tercapai_text').textContent = penjualanTercapaiText;
+                document.getElementById('produk_terjual_text').textContent = produkTerjualText;
+            })
+            .catch(error => console.error('Error:', error));
         });
+
         // Inisialisasi chart pertama kali
         updateChart(<?php echo json_encode($dates); ?>, <?php echo json_encode($totals); ?>);
     </script>
